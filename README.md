@@ -26,3 +26,14 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 **Emergency**
 ====
     $ rostopic pub --once [namespace]/reset std_msgs/Empty
+
+**Pilot**
+====
+    linear.x  (+)      Translate forward
+              (-)      Translate backward
+    linear.y  (+)      Translate to left
+              (-)      Translate to right
+    linear.z  (+)      Ascend
+              (-)      Descend
+    angular.z (+)      Rotate counter clockwise
+              (-)      Rotate clockwise
