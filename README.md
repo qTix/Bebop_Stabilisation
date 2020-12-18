@@ -13,16 +13,16 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 
 **Running the driver as a Node**
 ====
-$ roslaunch bebop_driver bebop_node.launch
+    $ roslaunch bebop_driver bebop_node.launch
 
 **Takeoff**
 ====
-$ rostopic pub --once [namespace]/takeoff std_msgs/Empty
+    $ rostopic pub --once [namespace]/takeoff std_msgs/Empty
 
 **Land**
 ====
-$ rostopic pub --once [namespace]/land std_msgs/Empty
+    $ rostopic pub --once [namespace]/land std_msgs/Empty
 
 **Emergency**
 ====
-$ rostopic pub --once [namespace]/reset std_msgs/Empty
+    $ rostopic pub --once [namespace]/reset std_msgs/Empty
