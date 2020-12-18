@@ -1,5 +1,8 @@
 # Bebop_Stabilisation
 
+This repository is the working space of two project groups (Drone1 and Drone2) in the context of Robotic and Embedded Project (PRJREB), INSA Lyon.  
+Each group has a working directory (Drone1/ and Drone2/), shared ressources areto be found in the main directory.
+
 [Installation Bebob](https://bebop-autonomy.readthedocs.io/en/latest/installation.html)  
 [SIFT](https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf)  
 [SURF](https://link.springer.com/chapter/10.1007/11744023_32)  
@@ -11,24 +14,26 @@ Build OpenCV:
 cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D OPENCV_ENABLE_NONFREE=ON
 
-**Running the driver as a Node**
-====
+# ROS commands
+
+Running the driver as a Node
+----
     $ roslaunch bebop_driver bebop_node.launch
 
-**Takeoff**
-====
+Takeoff
+----
     $ rostopic pub --once [namespace]/takeoff std_msgs/Empty
 
-**Land**
-====
+Land
+----
     $ rostopic pub --once [namespace]/land std_msgs/Empty
 
-**Emergency**
-====
+Emergency
+----
     $ rostopic pub --once [namespace]/reset std_msgs/Empty
 
-**Pilot**
-====
+Pilot
+----
     linear.x  (+)      Translate forward
               (-)      Translate backward
     linear.y  (+)      Translate to left
@@ -37,3 +42,41 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
               (-)      Descend
     angular.z (+)      Rotate counter clockwise
               (-)      Rotate clockwise
+
+# Video processing
+
+(from https://www.learnopencv.com/video-stabilization-using-point-feature-matching-in-opencv/)
+
+Import video, read frames
+----
+
+(A voir avec le format que renvoie le drone)
+
+Convert to greyscales
+----
+Because we don't really need colors
+
+    prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY) 
+
+Detect feature points
+----
+
+This method retrieve interesting points to track in the image, ie corners, straight lines, etc. You can change the number of points wanted, minimum space between them, etc.
+
+- cv2.goodFeaturesToTrack() ([doc](https://docs.opencv.org/4.5.0/dd/d1a/group__imgproc__feature.html#ga1d6bb77486c8f92d79c8793ad995d541)))
+
+Calculate optical flow
+----
+
+This method try to track each given feature in the next frame, you have to clean the results because errors may appear.
+
+- cv2.calcOpticalFlowPyrLK() ([doc](https://docs.opencv.org/4.5.0/dc/d6b/group__video__track.html#ga473e4b886d0bcc6b65831eb88ed93323))
+
+Estimate Motion
+----
+
+This methods uses the points of interest from the first frame, and the linked points of interest from the second frame to compute the transformation matrix.
+
+**ATTENTION : this method is deprecated since OpenCV-4, see [cv2.estimateAffine2D()](https://docs.opencv.org/4.5.0/d9/d0c/group__calib3d.html#ga27865b1d26bac9ce91efaee83e94d4dd) and [cv2.estimateAffinePartial2D()](https://docs.opencv.org/4.5.0/d9/d0c/group__calib3d.html#gad767faff73e9cbd8b9d92b955b50062d)**
+
+- cv2.estimateRigidTransform() ([doc](https://docs.opencv.org/4.5.0/dc/d6b/group__video__track.html#ga762cbe5efd52cf078950196f3c616d48))
