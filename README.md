@@ -50,7 +50,18 @@ Pilot
 Import video, read frames
 ----
 
-(A voir avec le format que renvoie le drone)
+Video stream is published on `image_raw` topic as `sensor_msgs/Image` messages. (640 x 368 @ 30 Hz) ([doc](https://bebop-autonomy.readthedocs.io/en/latest/reading.html))  
+We receive one image after another, so we'll need to store at least one opencv image in a 'buffer'.  
+We need to convert this 'ROS styled' images flow to OpenCV format. We'll use ROS' package [vision_opencv](https://wiki.ros.org/vision_opencv).  
+
+Using vision_opencv
+----
+
+[Tutorial](https://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython) on converting ROS images to OpenCV format (Python).
+
+    from cv_bridge import CvBridge
+    self.bridge = CvBridge()
+    cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
 
 Convert to greyscales
 ----
@@ -77,6 +88,6 @@ Estimate Motion
 
 This methods uses the points of interest from the first frame, and the linked points of interest from the second frame to compute the transformation matrix.
 
-**ATTENTION : this method is deprecated since OpenCV-4, see [cv2.estimateAffine2D()](https://docs.opencv.org/4.5.0/d9/d0c/group__calib3d.html#ga27865b1d26bac9ce91efaee83e94d4dd) and [cv2.estimateAffinePartial2D()](https://docs.opencv.org/4.5.0/d9/d0c/group__calib3d.html#gad767faff73e9cbd8b9d92b955b50062d)**
+**ATTENTION : this method is deprecated since OpenCV-4, see [cv2.estimateAffine2D()](https://docs.opencv.org/4.5.0/d9/d0c/group__calib3d.html#ga27865b1d26bac9ce91efaee83e94d4dd) and [cv2.estimateAffinePartial2D()](https://docs.opencv.org/4.5.0/d9/d0c/group__calib3d.html#gad767faff73e9cbd8b9d92b955b50062d) instead.**
 
 - cv2.estimateRigidTransform() ([doc](https://docs.opencv.org/4.5.0/dc/d6b/group__video__track.html#ga762cbe5efd52cf078950196f3c616d48))
