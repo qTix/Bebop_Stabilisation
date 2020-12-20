@@ -60,8 +60,10 @@ Using vision_opencv
 [Tutorial](https://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython) on converting ROS images to OpenCV format (Python).
 
     from cv_bridge import CvBridge
-    self.bridge = CvBridge()
-    cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+    bridge = CvBridge()
+    cv_image = self.bridge.imgmsg_to_cv2(image_message, desired_encoding='passthrough')
+
+We will need to pay attention to the encoding that we want, most common encoding for opencv is `bgr8`.
 
 Convert to greyscales
 ----
