@@ -73,11 +73,33 @@ class images_motion(object):
                     self.prev_gray = curr_gray
 
                     # print("Tracked points : " + str(len(prev_pts)))
-                    print(np.round(self.transforms[-1],1))
+                    # print(np.round(self.transforms[-1],1))
+                    # Compute trajectory using cumulative sum of transformations
+                    trajectory = np.cumsum(transforms, axis=0)
+                    smoothed_trajectory = smooth(trajectory)
+
+                    # Calculate difference in smoothed_trajectory and trajectory
+                    difference = smoothed_trajectory - trajectory
+
+                    # Calculate newer transformation array
+                    transforms_smooth = transforms + difference
+                    # Extract transformations from the new transformation array
+                    dx = transforms_smooth[i,0]
+                    dy = transforms_smooth[i,1]
+                    da = transforms_smooth[i,2]
+                    # Reconstruct transformation matrix accordingly to new values
+                    m = np.zeros((2,3), np.float32)
+                    m[0,0] = np.cos(da)
+                    m[0,1] = -np.sin(da)
+                    m[1,0] = np.sin(da)
+                    m[1,1] = np.cos(da)
+                    m[0,2] = dx
+                    m[1,2] = dy
+
+                    print(m)
 
                 else:
                     print("Cannot find Rigid Transform")
-
 
 
 def main(args):
@@ -91,6 +113,27 @@ def main(args):
         print("Shutting down")
         pim.abbort_mission()
     cv2.destroyAllWindows()
+
+def movingAverage(curve, radius):
+  window_size = 2 * radius + 1
+  # Define the filter
+  f = np.ones(window_size)/window_size
+  # Add padding to the boundaries
+  curve_pad = np.lib.pad(curve, (radius, radius), 'edge')
+  # Apply convolution
+  curve_smoothed = np.convolve(curve_pad, f, mode='same')
+  # Remove padding
+  curve_smoothed = curve_smoothed[radius:-radius]
+  # return smoothed curve
+  return curve_smoothed
+
+def smooth(trajectory):
+  smoothed_trajectory = np.copy(trajectory)
+  # Filter the x, y and angle curves
+  for i in range(3):
+    smoothed_trajectory[:,i] = movingAverage(trajectory[:,i], radius=SMOOTHING_RADIUS)
+
+  return smoothed_trajectory
 
 if __name__ == '__main__':
           main(sys.argv)

@@ -1,14 +1,11 @@
 #! /usr/bin/python
 
-import rospy
+import rospy, cv2, sys, os, time
 import numpy as np
 from sensor_msgs.msg import Image
 # ROS Image message -> OpenCV2 image converter
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Empty
-# OpenCV2 for saving an image
-import cv2
-import sys
 
 class process_images(object):
 
@@ -21,6 +18,8 @@ class process_images(object):
 
         self.empty_msg = Empty()
         self.bridge = CvBridge()
+        self.folder_name = os.path.join("./",str(time.time()))
+        os.mkdir(self.folder_name)
 
     def callback(self, msg):
         try:
@@ -39,7 +38,7 @@ class process_images(object):
             for i in corners:
                 x,y = i.ravel()
                 cv2.circle(cv2_img,(x,y),6,255,-1)
-            cv2.imwrite(os.path.join(folder_name,str(time)+'.jpeg'), cv2_img)
+            cv2.imwrite(os.path.join(self.folder_name,str(time)+'.jpeg'), cv2_img)
 
         try:
             self.proc_image_pub.publish(self.bridge.cv2_to_imgmsg(cv2_img, "bgr8"))
