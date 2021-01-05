@@ -31,7 +31,10 @@ class process_images(object):
         else:
             time = msg.header.stamp
             gray = cv2.cvtColor(cv2_img,cv2.COLOR_BGR2GRAY)
-            corners = cv2.goodFeaturesToTrack(gray,20,0.50,20,3)
+            corners = cv2.goodFeaturesToTrack(gray,maxCorners=200,
+                                                    qualityLevel=0.01,
+                                                    minDistance=30,
+                                                    blockSize=3)
             corners = np.int0(corners)
             for i in corners:
                 x,y = i.ravel()
