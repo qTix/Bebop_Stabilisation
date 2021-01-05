@@ -2,6 +2,7 @@
 
 import rospy
 import time
+import numpy as np
 from sensor_msgs.msg import Image
 # ROS Image message -> OpenCV2 image converter
 from cv_bridge import CvBridge, CvBridgeError
@@ -24,7 +25,13 @@ def image_callback(msg):
     else:
         # Save your OpenCV2 image as a jpeg
         time = msg.header.stamp
-        cv2.imwrite(os.path.join(folder_name,str(time)+'.jpeg'), cv2_img)
+        gray = cv2.cvtColor(cv2_img,cv2.COLOR_BGR2GRAY)
+        corners = cv2.goodFeaturesToTrack(gray,10,0.005,30,3)
+        corners = np.int0(corners)
+        for i in corners:
+            x,y = i.ravel()
+            cv2.circle(cv2_img,(x,y),6,255,-1)
+        #cv2.imwrite(os.path.join(folder_name,str(time)+'.jpeg'), cv2_img)
         rospy.sleep(0.1)
 
 def main():
