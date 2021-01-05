@@ -39,13 +39,12 @@ class process_images(object):
             for i in corners:
                 x,y = i.ravel()
                 cv2.circle(cv2_img,(x,y),6,255,-1)
-            #cv2.imwrite(os.path.join(folder_name,str(time)+'.jpeg'), cv2_img)
+            cv2.imwrite(os.path.join(folder_name,str(time)+'.jpeg'), cv2_img)
 
         try:
             self.proc_image_pub.publish(self.bridge.cv2_to_imgmsg(cv2_img, "bgr8"))
         except CvBridgeError as e:
             print(e)
-        rospy.sleep(0.1)
 
     def takeoff(self):
         print("Taking off...")

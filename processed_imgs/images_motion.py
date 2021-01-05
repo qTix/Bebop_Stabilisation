@@ -13,11 +13,11 @@ import sys
 class images_motion(object):
 
     def __init__(self):
-        self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 10)
+        self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 1)
         self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
 
-        self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback)
+        self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
 
         self.empty_msg = Empty()
         self.bridge = CvBridge()
@@ -58,50 +58,32 @@ class images_motion(object):
                 #Find transformation matrix
                 m = cv2.estimateRigidTransform(prev_pts, curr_pts, fullAffine=False) #will only work with OpenCV-3 or less
 
-                # Extract traslation
-                dx = m[0,2]
-                dy = m[1,2]
+                if m:
+                    # Extract traslation
+                    dx = m[0,2]
+                    dy = m[1,2]
 
-                # Extract rotation angle
-                da = np.arctan2(m[1,0], m[0,0])
+                    # Extract rotation angle
+                    da = np.arctan2(m[1,0], m[0,0])
 
-                # Store transformation
-                self.transforms.append([dx,dy,da])
+                    # Store transformation
+                    self.transforms.append([dx,dy,da])
 
-                # Move to next frame
-                self.prev_gray = curr_gray
+                    # Move to next frame
+                    self.prev_gray = curr_gray
 
-                # print("Tracked points : " + str(len(prev_pts)))
-                print(np.round(self.transforms[-1],1))
+                    # print("Tracked points : " + str(len(prev_pts)))
+                    print(np.round(self.transforms[-1],1))
 
-                # Visualisation of good goodFeaturesToTrack
-                # for i in self.prev_corners:
-                #     x,y = i.ravel()
-                #     cv2.circle(cv2_img,(x,y),6,255,-1)
-                # time = msg.header.stamp
-                #cv2.imwrite(os.path.join(folder_name,str(time)+'.jpeg'), cv2_img)
+                else:
+                    print("Cannot find Rigid Transform")
 
-                # Publish output image to ROS topic
-                # try:
-                #     self.proc_image_pub.publish(self.bridge.cv2_to_imgmsg(cv2_img, "bgr8"))
-                # except CvBridgeError as e:
-                #     print(e)
-                # rospy.sleep(0.1)
 
-    def takeoff(self):
-        print("Taking off...")
-        rospy.sleep(0.5)
-        self.takeoff_pub.publish(self.empty_msg)
-
-    def abbort_mission(self):
-        print("LANDING !! ABORT MISSION !! LANDING !!")
-        rospy.sleep(0.5)
-        self.land_pub.publish(self.empty_msg)
 
 def main(args):
     pim = images_motion()
     rospy.init_node('process_images_node', anonymous=True)
-    rospy.sleep(1)
+    rospy.Rate(30)
     #pim.takeoff()
     try:
         rospy.spin()
