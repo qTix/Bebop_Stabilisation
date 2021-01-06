@@ -8,7 +8,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Empty
 from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Vector3, Twist
 # OpenCV2 for saving an image
 import cv2, sys, time, collections
 
@@ -21,6 +21,7 @@ class images_motion(object):
         self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
         self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
+        self.move_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
 
         self.stab_sub = rospy.Subscriber("/bebop/stabilize", Empty, self.handle_stab, queue_size = 1)
         self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
@@ -28,6 +29,7 @@ class images_motion(object):
         self.deviation = Vector3()
         self.empty_msg = Empty()
         self.bridge = CvBridge()
+        self.twist_msg = Twist()
 
         self.prev_gray = None
         self.transforms = []
@@ -37,6 +39,7 @@ class images_motion(object):
         self.dev_history = collections.deque(maxlen = HISTORY_LEN)
 
     def callback(self, msg):
+        msg_time = msg.header.stamp
         if self.stabilize:
             try:
                 # Convert your ROS Image message to OpenCV2
@@ -91,8 +94,17 @@ class images_motion(object):
                         self.deviation.y = self.transforms[-1][0]
                         self.deviation.z = self.transforms[-1][1]
                         self.deviation.x = self.transforms[-1][2]
-                        self.dev_pub.publish(self.deviation)
-                        self.dev_history.append(self.deviation)
+                        self.dev_history.append([msg_time, self.deviation])
+                        # print(self.dev_history)
+
+                        if -0.7 < self.deviation.x < 0.7:
+                            self.twist_msg.linear.x = -self.deviation.x
+                        if -0.7 < self.deviation.y < 0.7:
+                            self.twist_msg.linear.y = -self.deviation.y
+                        if  -0.7 < self.deviation.z < 0.7:
+                            self.twist_msg.linear.z = -self.deviation.z
+                        self.twist_msg.angular.z = 0
+                        self.move_pub.publish(self.twist_msg)
 
 
                     else:

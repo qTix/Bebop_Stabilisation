@@ -89,11 +89,11 @@ class images_motion(object):
                     self.deviation.x=self.transforms[-1][2]
                     self.dev_pub.publish(self.deviation)
 
-                    if self.deviation.x < 0.7 && self.deviation.x > -0.7
+                    if -0.7 < self.deviation.x < 0.7:
                         self.twist_msg.linear.x = self.deviation.x
-                    if self.deviation.y < 0.7 && self.deviation.y > -0.7
-                        self.twist_msg.linear.y = self.deviation.y*
-                    if self.deviation.z < 0.7 && self.deviation.z > -0.7
+                    if -0.7 < self.deviation.y < 0.7:
+                        self.twist_msg.linear.y = self.deviation.y
+                    if  -0.7 < self.deviation.z < 0.7:
                         self.twist_msg.linear.z = self.deviation.z
                     self.twist_msg.angular.z = 0
                     self.move_pub.publish(self.twist_msg)
@@ -107,7 +107,6 @@ def main(args):
     pim = images_motion()
     rospy.init_node('process_images_node', anonymous=True)
     rospy.Rate(30)
-    #pim.takeoff()
     try:
         rospy.spin()
     except KeyboardInterrupt:
