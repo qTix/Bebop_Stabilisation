@@ -14,45 +14,51 @@ def main():
     global i
     rospy.sleep(1)
     takeoff.publish(empty_msg)
-    strength = 0.5
+    strength = 0.2
     rospy.sleep(3)
     if(i == 0):
         move_msg.linear.x = strength
         move_msg.linear.y = 0
         move_msg.linear.z = 0
         move_msg.angular.z = 0
-        move.publish(move_msg)
-        rospy.sleep(2)
+        for j in range (0,100):
+            move.publish(move_msg)
+            rospy.sleep(2)
         move_msg.linear.x = - strength
         move_msg.linear.y = 0
         move_msg.linear.z = 0
         move_msg.angular.z = 0
-        move.publish(move_msg)
-        rospy.sleep(2)
+        for j in range (0,100):
+            move.publish(move_msg)
+            rospy.sleep(2)
         move_msg.linear.x = 0
         move_msg.linear.y = strength
         move_msg.linear.z = 0
         move_msg.angular.z = 0
-        move.publish(move_msg)
-        rospy.sleep(2)
+        for j in range (0,100):
+            move.publish(move_msg)
+            rospy.sleep(2)
         move_msg.linear.x = 0
         move_msg.linear.y = - strength
         move_msg.linear.z = 0
         move_msg.angular.z = 0
-        move.publish(move_msg)
-        rospy.sleep(2)
+        for j in range (0,100):
+            move.publish(move_msg)
+            rospy.sleep(2)
         move_msg.linear.x = 0
         move_msg.linear.y = 0
         move_msg.linear.z = strength
         move_msg.angular.z = 0
-        move.publish(move_msg)
-        rospy.sleep(2)
+        for j in range (0,100):
+            move.publish(move_msg)
+            rospy.sleep(2)
         move_msg.linear.x = 0
         move_msg.linear.y = 0
         move_msg.linear.z = - strength
         move_msg.angular.z = 0
-        move.publish(move_msg)
-        rospy.sleep(2)
+        for j in range (0,100):
+            move.publish(move_msg)
+            rospy.sleep(2)
         move_msg.linear.x = 0
         move_msg.linear.y = 0
         move_msg.linear.z = 0
