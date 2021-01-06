@@ -40,7 +40,7 @@ class images_motion(object):
         self.dev_buffer_y = collections.deque(maxlen=BUFFER_SIZE)
         self.dev_buffer_z = collections.deque(maxlen=BUFFER_SIZE)
 
-    def str_from_value(mean_val):
+    def str_from_value(mean_val,oppose=False):
         if math.abs(mean_val) >= 5:
             #Oh no no no no
             mean_val = 0
@@ -49,7 +49,8 @@ class images_motion(object):
                 mean_val = -1
             else:
                 mean_val = 1
-
+        if oppose:
+            mean_val*=-1
         return mean_val
 
     def callback(self, msg):
