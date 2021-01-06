@@ -11,6 +11,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Vector3, Twist
 # OpenCV2 for saving an image
 import cv2, sys, time, collections
+import math
 
 BUFFER_SIZE = 15
 
@@ -38,6 +39,18 @@ class images_motion(object):
         self.dev_buffer_x = collections.deque(maxlen=BUFFER_SIZE)
         self.dev_buffer_y = collections.deque(maxlen=BUFFER_SIZE)
         self.dev_buffer_z = collections.deque(maxlen=BUFFER_SIZE)
+
+    def str_from_value(mean_val):
+        if math.abs(mean_val) >= 5:
+            #Oh no no no no
+            mean_val = 0
+        if math.abs(mean_val)>1:
+            if mean_val<0:
+                mean_val = -1
+            else:
+                mean_val = 1
+
+        return mean_val
 
     def callback(self, msg):
         msg_time = msg.header.stamp
@@ -104,21 +117,21 @@ class images_motion(object):
                         self.dev_buffer_z.append(self.deviation.z)
                         mean_y = sum(self.dev_buffer_y)/BUFFER_SIZE
                         mean_z = sum(self.dev_buffer_z)/BUFFER_SIZE
-                        decision = ""
+                        decision = "no motion detected"
                         if mean_y > threshhold_left_right:
                             decision = "go right :" +str(mean_y)
-                            self.twist_msg.linear.y = - mean_y
+                            self.twist_msg.linear.y = self.str_from_value(mean_y)
                         if mean_y < - threshhold_left_right:
                             decision = "go left :" +str(mean_y)
-                            self.twist_msg.linear.y = mean_y
+                            self.twist_msg.linear.y = self.str_from_value(mean_y)
 
                         if mean_z > threshhold_up_down:
                             decision = "go down :"+str(mean_z)
-                            self.twist_msg.linear.z = -mean_z
+                            self.twist_msg.linear.z = self.str_from_value(mean_z)
                         if mean_z < -threshhold_up_down:
 
                             decision = "go up :"+str(mean_z)
-                            self.twist_msg.linear.z = mean_z
+                            self.twist_msg.linear.z = self.str_from_value(mean_z)
 
                         print(decision)
                         self.twist_msg.angular.z = 0
