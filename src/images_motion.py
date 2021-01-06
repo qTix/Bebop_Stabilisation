@@ -12,7 +12,7 @@ from geometry_msgs.msg import Vector3, Twist
 # OpenCV2 for saving an image
 import cv2, sys, time, collections
 
-HISTORY_LEN = 20
+BUFFER_SIZE = 15
 
 class images_motion(object):
 
@@ -21,6 +21,7 @@ class images_motion(object):
         self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
         self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
+        self.move_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
 
         self.stab_sub = rospy.Subscriber("/bebop/stabilize", Empty, self.handle_stab, queue_size = 1)
         self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
@@ -28,13 +29,15 @@ class images_motion(object):
         self.deviation = Vector3()
         self.empty_msg = Empty()
         self.bridge = CvBridge()
+        self.twist_msg = Twist()
 
         self.prev_gray = None
         self.transforms = []
         self.stabilize = False
         self.last_stab_time = 0
-
-        self.dev_history = collections.deque(maxlen = HISTORY_LEN)
+        self.dev_buffer_x = collections.deque(maxlen=BUFFER_SIZE)
+        self.dev_buffer_y = collections.deque(maxlen=BUFFER_SIZE)
+        self.dev_buffer_z = collections.deque(maxlen=BUFFER_SIZE)
 
     def callback(self, msg):
         msg_time = msg.header.stamp
@@ -92,9 +95,34 @@ class images_motion(object):
                         self.deviation.y = self.transforms[-1][0]
                         self.deviation.z = self.transforms[-1][1]
                         self.deviation.x = self.transforms[-1][2]
-                        self.dev_history.append([msg_time, self.deviation])
+                        #self.dev_history.append([msg_time, self.deviation])
                         # print(self.dev_history)
+                        threshhold_left_right = 0.5
+                        threshhold_up_down = 0.5
+                        self.dev_buffer_x.append(self.deviation.x)
+                        self.dev_buffer_y.append(self.deviation.y)
+                        self.dev_buffer_z.append(self.deviation.z)
+                        mean_y = sum(self.dev_buffer_y)/BUFFER_SIZE
+                        mean_z = sum(self.dev_buffer_z)/BUFFER_SIZE
+                        decision = ""
+                        if mean_y > threshhold_left_right:
+                            decision = "go right :" +str(mean_y)
+                            self.twist_msg.linear.y = - mean_y
+                        if mean_y < - threshhold_left_right:
+                            decision = "go left :" +str(mean_y)
+                            self.twist_msg.linear.y = mean_y
 
+                        if mean_z > threshhold_up_down:
+                            decision = "go down :"+str(mean_z)
+                            self.twist_msg.linear.z = -mean_z
+                        if mean_z < -threshhold_up_down:
+
+                            decision = "go up :"+str(mean_z)
+                            self.twist_msg.linear.z = mean_z
+
+                        print(decision)
+                        self.twist_msg.angular.z = 0
+                        # self.move_pub.publish(self.twist_msg)
 
 
                     else:
