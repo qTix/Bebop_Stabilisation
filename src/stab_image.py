@@ -105,6 +105,20 @@ class images_motion(object):
                         #mean_y = sum(self.dev_buffer_y)/BUFFER_SIZE
                         #mean_z = sum(self.dev_buffer_z)/BUFFER_SIZE
                         decision = ""
+                        
+                        if self.deviation.x > 1:
+                            self.deviation.x = 1
+                        if self.deviation.x < -1:
+                            self.deviation.x = -1
+                        if self.deviation.y >1:
+                            self.deviation.y = 1
+                        if self.deviation.y < -1:
+                            self.deviation.y = -1
+                        if self.deviation.z > 1:
+                            self.deviation.z = 1
+                        if self.deviation.z < -1:
+                            self.deviation.z = -1
+
                         if 1 > self.deviation.y > 0.2:
                             self.twist_msg.linear.y =  - self.deviation.y/2
                             decision = "go right :" +str(self.deviation.y)
