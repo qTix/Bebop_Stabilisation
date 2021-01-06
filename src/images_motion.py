@@ -21,7 +21,6 @@ class images_motion(object):
         self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
         self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
-        self.move_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
 
         self.stab_sub = rospy.Subscriber("/bebop/stabilize", Empty, self.handle_stab, queue_size = 1)
         self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
@@ -29,7 +28,6 @@ class images_motion(object):
         self.deviation = Vector3()
         self.empty_msg = Empty()
         self.bridge = CvBridge()
-        self.twist_msg = Twist()
 
         self.prev_gray = None
         self.transforms = []
@@ -97,14 +95,6 @@ class images_motion(object):
                         self.dev_history.append([msg_time, self.deviation])
                         # print(self.dev_history)
 
-                        if -0.7 < self.deviation.x < 0.7:
-                            self.twist_msg.linear.x = -self.deviation.x
-                        if -0.7 < self.deviation.y < 0.7:
-                            self.twist_msg.linear.y = -self.deviation.y
-                        if  -0.7 < self.deviation.z < 0.7:
-                            self.twist_msg.linear.z = -self.deviation.z
-                        self.twist_msg.angular.z = 0
-                        self.move_pub.publish(self.twist_msg)
 
 
                     else:
