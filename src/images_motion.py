@@ -10,7 +10,9 @@ from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Vector3
 # OpenCV2 for saving an image
-import cv2, sys, time
+import cv2, sys, time, collections
+
+HISTORY_LEN = 20
 
 class images_motion(object):
 
@@ -31,6 +33,8 @@ class images_motion(object):
         self.transforms = []
         self.stabilize = False
         self.last_stab_time = 0
+
+        self.dev_history = collections.deque(maxlen = HISTORY_LEN)
 
     def callback(self, msg):
         if self.stabilize:
@@ -88,6 +92,7 @@ class images_motion(object):
                         self.deviation.z = self.transforms[-1][1]
                         self.deviation.x = self.transforms[-1][2]
                         self.dev_pub.publish(self.deviation)
+                        self.dev_history.append(self.deviation)
 
 
                     else:
