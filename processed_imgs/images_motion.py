@@ -6,13 +6,11 @@ from sensor_msgs.msg import Image
 # ROS Image message -> OpenCV2 image converter
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Empty
+from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Vector3
 # OpenCV2 for saving an image
-import cv2
-import sys
-
-SMOOTHING_RADIUS = 50
+import cv2, sys, time
 
 class images_motion(object):
 
@@ -22,76 +20,90 @@ class images_motion(object):
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
         self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
 
+        self.stab_sub = rospy.Subscriber("/bebop/stabilize", Empty, self.handle_stab, queue_size = 1)
         self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
 
+        self.deviation = Vector3()
         self.empty_msg = Empty()
         self.bridge = CvBridge()
 
         self.prev_gray = None
         self.transforms = []
-        self.deviation = Vector3()
+        self.stabilize = False
+        self.last_stab_time = 0
 
     def callback(self, msg):
-        stamp = msg.header.stamp
-        try:
-            # Convert your ROS Image message to OpenCV2
-            cv2_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        except CvBridgeError, e:
-            print(e)
-        else:
-            curr_gray = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
-
-            if self.prev_gray is None:
-                curr_gray = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
-                self.prev_gray = curr_gray
+        if self.stabilize:
+            try:
+                # Convert your ROS Image message to OpenCV2
+                cv2_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            except CvBridgeError, e:
+                print(e)
             else:
-                prev_pts = cv2.goodFeaturesToTrack(self.prev_gray,
-                                                 maxCorners=200,
-                                                 qualityLevel=0.01,
-                                                 minDistance=30,
-                                                 blockSize=3)
+                curr_gray = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
 
-                # Convert to grayscale
-                gray = cv2.cvtColor(cv2_img,cv2.COLOR_BGR2GRAY)
-
-                # Calculate optical flow (i.e. track feature points)
-                curr_pts, status, err = cv2.calcOpticalFlowPyrLK(self.prev_gray, curr_gray, prev_pts, None)
-
-                # Filter only valid points
-                idx = np.where(status==1)[0]
-                prev_pts = prev_pts[idx]
-                curr_pts = curr_pts[idx]
-
-                #Find transformation matrix
-                m = cv2.estimateRigidTransform(prev_pts, curr_pts, fullAffine=False) #will only work with OpenCV-3 or less
-
-                if m is not None:
-                    # Extract traslation
-                    dx = m[0,2]
-                    dy = m[1,2]
-
-                    # Extract rotation angle
-                    da = np.arctan2(m[1,0], m[0,0])
-
-                    # Store transformation
-                    self.transforms.append([dx,dy,da])
-
-                    # Move to next frame
+                if self.prev_gray is None:
+                    curr_gray = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
                     self.prev_gray = curr_gray
-
-                    # print("Tracked points : " + str(len(prev_pts)))
-                    # print(np.round(self.transforms[-1],1))
-
-                    #print(str(np.round(self.transforms[-1],1)))
-                    self.deviation.y=self.transforms[-1][0]
-                    self.deviation.z=self.transforms[-1][1]
-                    self.deviation.x=self.transforms[-1][2]
-                    self.dev_pub.publish(self.deviation)
-
-
-
                 else:
-                    print("Cannot find Rigid Transform")
+                    prev_pts = cv2.goodFeaturesToTrack(self.prev_gray,
+                                                     maxCorners=200,
+                                                     qualityLevel=0.01,
+                                                     minDistance=30,
+                                                     blockSize=3)
+
+                    # Convert to grayscale
+                    gray = cv2.cvtColor(cv2_img,cv2.COLOR_BGR2GRAY)
+
+                    # Calculate optical flow (i.e. track feature points)
+                    curr_pts, status, err = cv2.calcOpticalFlowPyrLK(self.prev_gray, curr_gray, prev_pts, None)
+
+                    # Filter only valid points
+                    idx = np.where(status==1)[0]
+                    prev_pts = prev_pts[idx]
+                    curr_pts = curr_pts[idx]
+
+                    #Find transformation matrix
+                    m = cv2.estimateRigidTransform(prev_pts, curr_pts, fullAffine=False) #will only work with OpenCV-3 or less
+
+                    if m is not None:
+                        # Extract traslation
+                        dx = m[0,2]
+                        dy = m[1,2]
+
+                        # Extract rotation angle
+                        da = np.arctan2(m[1,0], m[0,0])
+
+                        # Store transformation
+                        self.transforms.append([dx,dy,da])
+
+                        # Move to next frame
+                        self.prev_gray = curr_gray
+
+                        # print("Tracked points : " + str(len(prev_pts)))
+                        # print(np.round(self.transforms[-1],1))
+
+                        #print(str(np.round(self.transforms[-1],1)))
+                        self.deviation.y = self.transforms[-1][0]
+                        self.deviation.z = self.transforms[-1][1]
+                        self.deviation.x = self.transforms[-1][2]
+                        self.dev_pub.publish(self.deviation)
+
+
+                    else:
+                        print("Cannot find Rigid Transform")
+        else:
+            print("Stabilisation off")
+
+    def handle_stab(self, msg):
+        if time.time()-self.last_stab_time > 1:
+            self.last_stab_time = time.time()
+            self.stabilize = not self.stabilize
+            if self.stabilize:
+                print("Stabilisation on")
+            else:
+                print("Stabilisation off")
+
 
 
 def main(args):
@@ -105,6 +117,7 @@ def main(args):
         print("Shutting down")
         pim.abbort_mission()
     cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
           main(sys.argv)
