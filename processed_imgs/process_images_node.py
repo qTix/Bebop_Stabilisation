@@ -10,7 +10,7 @@ from std_msgs.msg import Empty
 class process_images(object):
 
     def __init__(self):
-        self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 10)
+        self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 1)
         self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
 
@@ -30,7 +30,7 @@ class process_images(object):
         else:
             time = msg.header.stamp
             gray = cv2.cvtColor(cv2_img,cv2.COLOR_BGR2GRAY)
-            corners = cv2.goodFeaturesToTrack(gray,maxCorners=200,
+            corners = cv2.goodFeaturesToTrack(gray, maxCorners=200,
                                                     qualityLevel=0.01,
                                                     minDistance=30,
                                                     blockSize=3)
