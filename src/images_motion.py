@@ -120,18 +120,17 @@ class images_motion(object):
                         mean_z = sum(self.dev_buffer_z)/BUFFER_SIZE
                         decision = "no motion detected"
                         if mean_y > threshhold_left_right:
-                            decision = "go right :" +str(mean_y)
+                            decision = "go right :" +str(mean_y) + " | sending : " + str(self.str_from_value(mean_y))
                             self.twist_msg.linear.y = self.str_from_value(mean_y)
                         if mean_y < - threshhold_left_right:
-                            decision = "go left :" +str(mean_y)
+                            decision = "go left :" +str(mean_y) + " | sending : " + str(self.str_from_value(mean_y))
                             self.twist_msg.linear.y = self.str_from_value(mean_y)
 
                         if mean_z > threshhold_up_down:
-                            decision = "go down :"+str(mean_z)
+                            decision = "go down :"+str(mean_z)  + " | sending : " + str(self.str_from_value(mean_z))
                             self.twist_msg.linear.z = self.str_from_value(mean_z)
                         if mean_z < -threshhold_up_down:
-
-                            decision = "go up :"+str(mean_z)
+                            decision = "go up :"+str(mean_z) +  + " | sending : " + str(self.str_from_value(mean_z))
                             self.twist_msg.linear.z = self.str_from_value(mean_z)
 
                         print(decision)
