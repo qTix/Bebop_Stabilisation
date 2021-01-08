@@ -121,11 +121,11 @@ class images_motion(object):
 
                         if 1 > self.deviation.y > 0.2:
                             self.twist_msg.linear.y =  - 0.5* self.deviation.y/2
-                            decision = "go right :" +str(self.deviation.y)
+                            decision = "go right :" +str(self.twist_msg.linear.y)
                             #self.twist_msg.linear.y = - mean_y
                         if -1 < self.deviation.y < -0.2:
                             self.twist_msg.linear.y =  - 0.5*self.deviation.y/2
-                            decision = "go left :" +str(self.deviation.y)
+                            decision = "go left :" +str(self.twist_msg.linear.y)
                             #self.twist_msg.linear.y = mean_y
 
                         if 1 > self.deviation.z > 0.5:

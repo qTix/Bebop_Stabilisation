@@ -20,15 +20,14 @@ TRESHHOLD = 0.5
 class images_motion(object):
 
     def __init__(self):
-        self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 1)
-        self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
-        self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
+        # self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 1)
+        # self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
+        # self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
         # self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
         self.control_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size = 1)
 
         self.stab_sub = rospy.Subscriber("/bebop/stabilize", Empty, self.handle_stab, queue_size = 1)
         self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
-        self.odom_sub = rospy.Subscriber("/bebop/odom", Odometry, self.callback_odom, queue_size = 1)
 
         self.deviation = Vector3()
         self.empty_msg = Empty()
@@ -38,10 +37,6 @@ class images_motion(object):
         self.transforms = []
         self.stabilize = False
         self.last_stab_time = 0
-        self.last_stab_control = Twist()
-
-        self.positions = []
-        self.corrections = []
 
         self.dev_history = collections.deque(maxlen = HISTORY_LEN)
 
@@ -102,14 +97,19 @@ class images_motion(object):
                         # print(np.round(self.transforms[-1],1))
 
                         #print(str(np.round(self.transforms[-1],1)))
-                        self.deviation.y = self.transforms[-1][0]
-                        self.deviation.z = self.transforms[-1][1]
-                        self.deviation.x = self.transforms[-1][2]
-                        self.dev_history.append([msg_time, self.deviation])
+                        if -0.2 < self.deviation.y < 0.2:
+                            self.deviation.y = self.transforms[-1][0]
+                        else:
+                            self.deviation.y = 0.0
+
+                        if -0.2 < self.deviation.z < 0.2:
+                            self.deviation.z = self.transforms[-1][1]
+                        else:
+                            self.deviation.z = 0.0
                         # print(self.dev_history)
 
                         # Initialize movement to 0:
-                        self.last_stab_control = Twist()
+                        last_stab_control = Twist()
 
                         # Proportial and integral reaction control
                         y_react_p = Kp * self.deviation.y
@@ -135,13 +135,11 @@ class images_motion(object):
                             z_react = TRESHHOLD
                         if z_react < -TRESHHOLD:
                             z_react = -TRESHHOLD
-                        self.last_stab_control.linear.y = - y_react
-                        self.last_stab_control.linear.z = z_react
+                        last_stab_control.linear.y = - y_react
+                        last_stab_control.linear.z = z_react
 
-                        self.corrections.append([msg_time, -y_react, z_react])
-
-                        self.control_pub.publish(self.last_stab_control)
-                        print(self.last_stab_control.linear)
+                        self.control_pub.publish(last_stab_control)
+                        print(last_stab_control.linear)
 
                     else:
                         print("Cannot find Rigid Transform")
@@ -156,22 +154,6 @@ class images_motion(object):
                 print("Stabilisation on")
             else:
                 print("Stabilisation off")
-                fields = ['Timestamp', 'x', 'y']
-
-                with open('../data/positions.csv', 'w') as f:
-                    write = csv.writer(f)
-                    write.writerow(fields)
-                    write.writerows(self.positions)
-                with open('../data/correction.csv', 'w') as f:
-                    write = csv.writer(f)
-                    write.writerow(fields)
-                    write.writerows(self.corrections)
-                # close odometry .csv
-                self.file_odom.close()
-                print('Movements saved ! Exiting')
-
-    def callback_odom(self, msg):
-        self.positions.append([msg.header.stamp.secs + msg.header.stamp.nsecs*1e-09, msg.pose.pose.position.x, msg.pose.pose.position.y])
 
 
 
