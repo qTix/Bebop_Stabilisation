@@ -41,10 +41,7 @@ class images_motion(object):
         self.dev_buffer_z = collections.deque(maxlen=BUFFER_SIZE)
 
     def str_from_value(mean_val,oppose=False):
-        mean_val = mean_val/10.0
-        if mean_val >= 5 or mean_val <= -5:
-            #Oh no no no no
-            mean_val = 0
+        """
         if mean_val > 1:
             mean_val = 1
         if mean_val < -1:
@@ -52,10 +49,16 @@ class images_motion(object):
 
         if oppose:
             mean_val*=-1
+        """
         return mean_val
+    def takeoff(self):
+        self.takeoff_pub.publish(self.empty_msg)
 
+    def land(self):
+        self.land_pub.publish(self.empty_msg)
     def callback(self, msg):
         msg_time = msg.header.stamp
+	self.stabilize = True
         if self.stabilize:
             try:
                 # Convert your ROS Image message to OpenCV2
@@ -119,25 +122,33 @@ class images_motion(object):
                         self.dev_buffer_z.append(self.deviation.z)
                         mean_y = sum(self.dev_buffer_y)/BUFFER_SIZE
                         mean_z = sum(self.dev_buffer_z)/BUFFER_SIZE
+                        if mean_y >1:
+                            mean_y = 1
+                        if mean_y <-1:
+                            mean_y = -1
+                        if mean_z >1:
+                            mean_z = 1
+                        if mean_z <-1:
+                            mean_z = -1
                         decision = "no motion detected"
                         if mean_y > threshhold_left_right:
-                            decision = "go right :" +str(mean_y) + " | sending : " + str(self.str_from_value(mean_y))
-                            self.twist_msg.linear.y = self.str_from_value(mean_y)
+                            decision = "go right :" +str(mean_y) + " | sending : " + str(mean_y/10.0)
+                            self.twist_msg.linear.y = mean_y / 10.0
                         if mean_y < - threshhold_left_right:
-                            decision = "go left :" +str(mean_y) + " | sending : " + str(self.str_from_value(mean_y))
-                            self.twist_msg.linear.y = self.str_from_value(mean_y)
+                            decision = "go left :" +str(mean_y) + " | sending : " + str(mean_y/10.0)
+                            self.twist_msg.linear.y = mean_y / 10.0
 
                         if mean_z > threshhold_up_down:
-                            decision = "go down :"+str(mean_z)  + " | sending : " + str(self.str_from_value(mean_z))
-                            self.twist_msg.linear.z = self.str_from_value(mean_z)
+                            decision = "go down :"+str(mean_z)  + " | sending : " + str(mean_z/10.0)
+                            self.twist_msg.linear.z =  - mean_z / 10.0
                         if mean_z < -threshhold_up_down:
-                            decision = "go up :"+str(mean_z) +  + " | sending : " + str(self.str_from_value(mean_z))
-                            self.twist_msg.linear.z = self.str_from_value(mean_z)
+                            decision = "go up :"+str(mean_z) + " | sending : " + str(mean_z/10.0)
+                            self.twist_msg.linear.z = - mean_z /10.0
 
                         print(decision)
-                        print(self.str_from_value(mean_y),self.str_from_value(mean_z))
+                        print(str(mean_y/10.0),str(mean_z/10.0))
                         self.twist_msg.angular.z = 0
-                        # self.move_pub.publish(self.twist_msg)
+                        self.move_pub.publish(self.twist_msg)
 
 
                     else:
@@ -160,12 +171,12 @@ def main(args):
     pim = images_motion()
     rospy.init_node('process_images_node', anonymous=True)
     rospy.Rate(30)
-    #pim.takeoff()
+    pim.takeoff()
     try:
         rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down")
-        pim.abbort_mission()
+        pim.land()
     cv2.destroyAllWindows()
 
 
