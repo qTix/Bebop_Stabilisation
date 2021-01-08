@@ -58,7 +58,7 @@ class images_motion(object):
         self.land_pub.publish(self.empty_msg)
     def callback(self, msg):
         msg_time = msg.header.stamp
-	self.stabilize = True
+
         if self.stabilize:
             try:
                 # Convert your ROS Image message to OpenCV2
