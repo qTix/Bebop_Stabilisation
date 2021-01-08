@@ -133,10 +133,10 @@ class images_motion(object):
                         decision = "no motion detected"
                         if mean_y > threshhold_left_right:
                             decision = "go right :" +str(mean_y) + " | sending : " + str(mean_y/10.0)
-                            self.twist_msg.linear.y = mean_y / 10.0
+                            self.twist_msg.linear.y =  - mean_y / 10.0
                         if mean_y < - threshhold_left_right:
                             decision = "go left :" +str(mean_y) + " | sending : " + str(mean_y/10.0)
-                            self.twist_msg.linear.y = mean_y / 10.0
+                            self.twist_msg.linear.y = - mean_y / 10.0
 
                         if mean_z > threshhold_up_down:
                             decision = "go down :"+str(mean_z)  + " | sending : " + str(mean_z/10.0)
