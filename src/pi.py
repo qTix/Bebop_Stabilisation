@@ -14,8 +14,7 @@ import cv2, sys, time, collections, csv
 
 HISTORY_LEN = 15
 Kp = 0.1
-# Ki = 0.2e-9
-Ki=0
+Ki = 0.2e-9
 TRESHHOLD = 0.5
 
 class images_motion(object):
@@ -51,7 +50,7 @@ class images_motion(object):
         self.writer.writerow( ('Timestamp', 'x', 'y', 'z') )
 
     def callback(self, msg):
-        msg_time = msg.header.stamp.nsecs
+        msg_time = msg.header.stamp.secs + msg.header.stamp.nsecs*1e-09
         if self.stabilize:
             try:
                 # Convert your ROS Image message to OpenCV2
@@ -172,7 +171,7 @@ class images_motion(object):
                 print('Movements saved ! Exiting')
 
     def callback_odom(self, msg):
-        self.positions.append([msg.header.stamp.nsecs, msg.pose.pose.position.x, msg.pose.pose.position.y])
+        self.positions.append([msg.header.stamp.secs + msg.header.stamp.nsecs*1e-09, msg.pose.pose.position.x, msg.pose.pose.position.y])
 
 
 
