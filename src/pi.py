@@ -10,11 +10,12 @@ from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Vector3, Twist
 # OpenCV2 for saving an image
-import cv2, sys, time, collections
+import cv2, sys, time, collections, csv
 
-HISTORY_LEN = 10
-Kp = 0.05
-Ki = 0.01
+HISTORY_LEN = 15
+Kp = 0.1
+# Ki = 0.2e-9
+Ki=0
 TRESHHOLD = 0.5
 
 class images_motion(object):
@@ -23,11 +24,12 @@ class images_motion(object):
         self.proc_image_pub = rospy.Publisher('/workstation/proc_image', Image, queue_size = 1)
         self.takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('/bebop/land', Empty, queue_size=1)
-        self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
-        self.control_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size = 10)
+        # self.dev_pub = rospy.Publisher('/workstation/deviation', Vector3, queue_size = 5)
+        self.control_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size = 1)
 
         self.stab_sub = rospy.Subscriber("/bebop/stabilize", Empty, self.handle_stab, queue_size = 1)
         self.raw_imb_sub = rospy.Subscriber("/bebop/image_raw", Image, self.callback, queue_size = 1)
+        self.odom_sub = rospy.Subscriber("/bebop/odom", Odometry, self.callback_odom, queue_size = 1)
 
         self.deviation = Vector3()
         self.empty_msg = Empty()
@@ -37,11 +39,19 @@ class images_motion(object):
         self.transforms = []
         self.stabilize = False
         self.last_stab_time = 0
+        self.last_stab_control = Twist()
+
+        self.positions = []
+        self.corrections = []
 
         self.dev_history = collections.deque(maxlen = HISTORY_LEN)
 
+        self.file_odom = open("../data/odometry.csv", "wb")
+        self.writer = csv.writer(self.file_odom)
+        self.writer.writerow( ('Timestamp', 'x', 'y', 'z') )
+
     def callback(self, msg):
-        msg_time = msg.header.stamp.secs
+        msg_time = msg.header.stamp.nsecs
         if self.stabilize:
             try:
                 # Convert your ROS Image message to OpenCV2
@@ -100,7 +110,7 @@ class images_motion(object):
                         # print(self.dev_history)
 
                         # Initialize movement to 0:
-                        react_control = Twist()
+                        self.last_stab_control = Twist()
 
                         # Proportial and integral reaction control
                         y_react_p = Kp * self.deviation.y
@@ -114,6 +124,8 @@ class images_motion(object):
                             z_react_i+= Ki * self.dev_history[buffer_size-i-1][1].z * dt
                         y_react = y_react_i + y_react_p
                         z_react = z_react_i + z_react_p
+                        # print("prop y \t" + str(np.round(y_react_p,3)))
+                        # print("int y \t" + str(np.round(y_react_i,3)))
 
                         # print("z correct: " + str(z_react) + "\t y correct: " + str(y_react))
                         if y_react > TRESHHOLD:
@@ -124,11 +136,13 @@ class images_motion(object):
                             z_react = TRESHHOLD
                         if z_react < -TRESHHOLD:
                             z_react = -TRESHHOLD
-                        react_control.linear.y = - y_react
-                        #react_control.linear.z = z_react
+                        self.last_stab_control.linear.y = - y_react
+                        self.last_stab_control.linear.z = z_react
 
-                        self.control_pub.publish(react_control)
-                        print(react_control)
+                        self.corrections.append([msg_time, -y_react, z_react])
+
+                        self.control_pub.publish(self.last_stab_control)
+                        print(self.last_stab_control.linear)
 
                     else:
                         print("Cannot find Rigid Transform")
@@ -143,6 +157,23 @@ class images_motion(object):
                 print("Stabilisation on")
             else:
                 print("Stabilisation off")
+                fields = ['Timestamp', 'x', 'y']
+
+                with open('../data/positions.csv', 'w') as f:
+                    write = csv.writer(f)
+                    write.writerow(fields)
+                    write.writerows(self.positions)
+                with open('../data/correction.csv', 'w') as f:
+                    write = csv.writer(f)
+                    write.writerow(fields)
+                    write.writerows(self.corrections)
+                # close odometry .csv
+                self.file_odom.close()
+                print('Movements saved ! Exiting')
+
+    def callback_odom(self, msg):
+        self.positions.append([msg.header.stamp.nsecs, msg.pose.pose.position.x, msg.pose.pose.position.y])
+
 
 
 
