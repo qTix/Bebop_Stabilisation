@@ -105,7 +105,7 @@ class images_motion(object):
                         #mean_y = sum(self.dev_buffer_y)/BUFFER_SIZE
                         #mean_z = sum(self.dev_buffer_z)/BUFFER_SIZE
                         decision = ""
-                        
+
                         if self.deviation.x > 1:
                             self.deviation.x = 1
                         if self.deviation.x < -1:
@@ -120,29 +120,29 @@ class images_motion(object):
                             self.deviation.z = -1
 
                         if 1 > self.deviation.y > 0.2:
-                            self.twist_msg.linear.y =  - self.deviation.y/2
+                            self.twist_msg.linear.y =  - 0.5* self.deviation.y/2
                             decision = "go right :" +str(self.deviation.y)
                             #self.twist_msg.linear.y = - mean_y
                         if -1 < self.deviation.y < -0.2:
-                            self.twist_msg.linear.y =  - self.deviation.y/2
+                            self.twist_msg.linear.y =  - 0.5*self.deviation.y/2
                             decision = "go left :" +str(self.deviation.y)
                             #self.twist_msg.linear.y = mean_y
 
-                        if 1 > self.deviation.z > 0.2:
-                            self.twist_msg.linear.z =  - self.deviation.z/2
+                        if 1 > self.deviation.z > 0.5:
+                            self.twist_msg.linear.z =  - 0.5*self.deviation.z/2
                             decision = "go down :"+str(self.twist_msg.linear.z)
                             #self.twist_msg.linear.z = -mean_z
-                        if -1 < self.deviation.z < -0.2:
-                            self.twist_msg.linear.z = - self.deviation.z/2
+                        if -1 < self.deviation.z < -0.5:
+                            self.twist_msg.linear.z = - 0.5*self.deviation.z/2
                             decision = "go up :"+str(self.twist_msg.linear.z)
                             #self.twist_msg.linear.z = mean_z
 
                         if 1 > self.deviation.x > 0.5:
-                            self.twist_msg.linear.x =  - self.deviation.x/2
+                            self.twist_msg.linear.x =  - 0.5*self.deviation.x/2
                             decision = "go forward :"+str(self.twist_msg.linear.x)
                             #self.twist_msg.linear.z = -mean_z
                         if -1 < self.deviation.x < -0.5:
-                            self.twist_msg.linear.x = - self.deviation.x/2
+                            self.twist_msg.linear.x = - 0.5*self.deviation.x/2
                             decision = "go backward :"+str(self.twist_msg.linear.x)
                             #self.twist_msg.linear.z = mean_z
 
@@ -151,7 +151,7 @@ class images_motion(object):
                         self.twist_msg.linear.x = 0
                         self.twist_msg.linear.y = 0
                         self.twist_msg.linear.z = 0
-                        # self.move_pub.publish(self.twist_msg)
+                        self.move_pub.publish(self.twist_msg)
 
 
                     else:
