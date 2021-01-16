@@ -1,4 +1,5 @@
 #! /usr/bin/python
+# This file represent the attempt to create a PI controler for the drone (Like a PID without the D)
 
 import rospy
 import numpy as np
