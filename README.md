@@ -13,6 +13,28 @@ Each group has a working directory (Drone1/ and Drone2/), shared ressources aret
 Build OpenCV:
 cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D OPENCV_ENABLE_NONFREE=ON
+    
+# Repository composition
+### src:
+contains ROS source code with:  
+ - **gftt.py**: a test file for the gftt function
+ - **images_motion.py**: file for proportional reaction to derivation, with xbox controler switch for activate/deactivate the stabilisation process
+ - **movement.py**: a test file to control the drone with a given sequence
+ - **pi.py**: improvement of images_motion.py with proportional AND integral reaction to derivation, with xbox controler switch handling too
+ - **stab.py**: proportional reaction prototype
+ - **stab_image.py**: mean based reaction to derivation
+ 
+ ### scripts:
+ contains development scripts:
+ - **driver.sh**: launches bebop autonomy driver
+ - **plot.sh**: launches ROS ploting node on a given topic for real time data analysis
+ 
+ ### launch:
+ contains launch file for the joy_node, handling xbox controler inputs
+ 
+ ### config:
+ contains config file to handle xbox controler with xbox button being mapped to "activate/deactivate stabilisation process"
+
 
 # ROS commands
 
