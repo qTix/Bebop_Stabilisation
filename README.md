@@ -1,7 +1,7 @@
 # Bebop_Stabilisation
 
 This repository is the working space of two project groups (Drone1 and Drone2) in the context of Robotic and Embedded Project (PRJREB), INSA Lyon.  
-Each group has a working directory (Drone1/ and Drone2/), shared ressources areto be found in the main directory.
+Each group has a working directory (Drone1/ and Drone2/), shared ressources are to be found in the main directory.
 
 [Installation Bebob](https://bebop-autonomy.readthedocs.io/en/latest/installation.html)  
 [SIFT](https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf)  
